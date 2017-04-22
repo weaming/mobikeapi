@@ -23,8 +23,8 @@ class API(object):
         self.bottom = 22.456602
         self.left = 113.808199
         self.right = 114.136072
-        self.offsetX = 0.02
-        self.offsetY = 0.02
+        self.offsetX = 0.002
+        self.offsetY = 0.001
         print (self.left - self.right)/self.offsetX
         print (self.top - self.bottom)/self.offsetY
 
@@ -57,23 +57,25 @@ class API(object):
 
     def post(self, url, data=None):
         """post and get json data or return None"""
-        resp = self.s.post(url, data)
+        try:
+            resp = self.s.post(url, data, timeout=10)
+        except Exception as e:
+            print(e)
+            return
 
         try:
             js = resp.json()
         except Exception as e:
+            print('-'*50)
             print('%s: %s:\n%r' % (resp.status_code, url, e))
             #print(resp.text)
+            print('-'*50)
         else:
-            if resp.status_code != 200:
-                print(resp.status_code, url)
+            print(resp.status_code, url)
 
-            if 'message' in js:
+            if 'message' in js and js['message'].strip():
                 print('message: %s' % js['message'])
-            if 'messages' in js:
-                print('messages: %s' % js['messages'])
-
-            if 'code' in js:
+            if 'code' in js and js['code'] != 0:
                 print('code: %s' % js['code'])
 
             return js
@@ -207,4 +209,4 @@ class API(object):
             for y in frange(self.bottom, self.top, self.offsetY):
                 location = (y, x)
                 yield self.nearby_bikes_info(location=location)
-                time.sleep(0.3)
+                #time.sleep(1)

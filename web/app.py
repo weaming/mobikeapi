@@ -21,12 +21,29 @@ def index():
 @app.route('/api/bikes')
 def get_bikes():
     locations = []
-    for obj in bikes.find():
-        info = {}
-        locations.append(info)
-        for k in ('type', 'distId', 'distY', 'distX'):
-            if k in obj:
-                info[k] = obj[k]
+    d = dt(2017, 4, 22, 20, 30)
+    condition = {'datetime': {'$gt': d}}
+    xx = request.args.get('lng')
+    yy = request.args.get('lat')
+    if xx and yy:
+        xx = float(xx)
+        yy = float(yy)
+        offsetX = 0.02
+        offsetY = 0.02
+        condition.update({
+            'distX': {'$gt': xx-offsetX, '$lt': xx+offsetX},
+            'distY': {'$gt': yy-offsetY, '$lt': yy+offsetY},
+        })
+    distIDs = set()
+    for obj in bikes.find(condition).limit(10000):
+        if obj['distId'] not in distIDs:
+            distIDs.add(obj['distId'])
+
+            info = {}
+            locations.append(info)
+            for k in ('biketype', 'distId', 'distY', 'distX', 'datetime'):
+                if k in obj:
+                    info[k] = obj[k]
 
     resp = jsonify(locations)
     resp.headers['Access-Control-Allow-Origin'] = '*'

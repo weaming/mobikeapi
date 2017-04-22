@@ -11,7 +11,7 @@ class API(object):
         self.mobileNo = mobileNo
         self.citycode = '0755'
         self.uuid = '62fc9433be988b6d32eed51306fd04b8'
-        self.authtoken = '914d94ce24bf1e541166771b7e4e6e49'
+        self.authtoken = '7f5e19162393713911c382983c68fe63'
         self.userid = ''
 
         self.api = 'https://api.mobike.com/mobike-api'
@@ -58,11 +58,26 @@ class API(object):
     def post(self, url, data=None):
         """post and get json data or return None"""
         resp = self.s.post(url, data)
+
         try:
-            return resp.json()
+            js = resp.json()
         except Exception as e:
-            print(resp.status_code, url, e)
+            print('%s: %s:\n%r' % (resp.status_code, url, e))
             #print(resp.text)
+        else:
+            if resp.status_code != 200:
+                print(resp.status_code, url)
+
+            if 'message' in js:
+                print('message: %s' % js['message'])
+            if 'messages' in js:
+                print('messages: %s' % js['messages'])
+
+            if 'code' in js:
+                print('code: %s' % js['code'])
+
+            return js
+
 
     def config(self, location=(None, None)):
         """
@@ -143,13 +158,20 @@ class API(object):
         return js
 
     def getridestate(self):
+        """
+        example response:
+        {u'lastTimes': 0, u'code': 0, u'message': u'', u'object': {u'orderid': u'', 'lastTimes': 0, u'bikeid
+        ': u'0755', u'biketype': 0, u'ride': 0, u'longitude': 0.0, u'redpackRidingtime': 10, u'duration': u'
+        ', u'second': None, u'cost': u'', u'starttime': None, u'redMoney': 42200, u'active': False, u'latitu
+        de': 0.0, u'redBikeFreetime': 120, u'kcal': u''}}
+        """
         _api = '/rentmgr/getridestate.do'
         api = self.lapi + _api
         js = self.post(api, data={'userid': self.userid})
         if js and js['code'] == 0:
             self.ride_state = js['object']
             self.ride_state['lastTimes'] = js['lastTimes']
-            return js
+        return js
 
     def binding_uid(self):
         _api = '/usermgr/bindinguid.do'

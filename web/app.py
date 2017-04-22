@@ -22,7 +22,8 @@ def index():
 def get_bikes():
     locations = []
     d = dt(2017, 4, 22, 20, 30)
-    condition = {'datetime': {'$gt': d}}
+    # condition = {'datetime': {'$gt': d}}
+    condition = {}
     xx = request.args.get('lng')
     yy = request.args.get('lat')
     if xx and yy:
@@ -34,18 +35,34 @@ def get_bikes():
             'distX': {'$gt': xx-offsetX, '$lt': xx+offsetX},
             'distY': {'$gt': yy-offsetY, '$lt': yy+offsetY},
         })
+
     distIDs = set()
-    for obj in bikes.find(condition).limit(10000):
-        if obj['distId'] not in distIDs:
-            distIDs.add(obj['distId'])
+    repeated = 0
+    if request.args.get('count'):
+        count = 0
+        for obj in bikes.find(condition):
+            if obj['distId'] not in distIDs:
+                distIDs.add(obj['distId'])
+                count += 1
+            else:
+                repeated += 1
+        resp = jsonify(count=count, repeated=repeated)
+    else:
+        for obj in bikes.find(condition).limit(10000):
+            if obj['distId'] not in distIDs:
+                distIDs.add(obj['distId'])
 
-            info = {}
-            locations.append(info)
-            for k in ('biketype', 'distId', 'distY', 'distX', 'datetime'):
-                if k in obj:
-                    info[k] = obj[k]
+                info = {}
+                locations.append(info)
+                for k in ('biketype', 'distId', 'distY', 'distX', 'datetime'):
+                    if k in obj:
+                        info[k] = obj[k]
+            else:
+                repeated += 1
 
-    resp = jsonify(locations)
+        print(len(distIDs), repeated)
+        resp = jsonify(locations)
+
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 

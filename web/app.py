@@ -11,7 +11,7 @@ from pymongo import MongoClient
 
 client = MongoClient('mongodb://localhost:27017/')
 db = client.mobike
-bikes = db.bikes
+bikes = db.bikes1
 
 app = Flask(__name__)
 
@@ -19,11 +19,42 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/osm')
+def osm():
+    return render_template('osm.html')
+
 @app.route('/all')
 def all_bikes():
     return render_template('all.html')
 
 @app.route('/api/bikes')
+def api_bikes():
+    bikes = get_bikes()
+    resp = jsonify(bikes)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+@app.route('/api/bikes.geojson')
+def api_geojson():
+    bikes = get_bikes()
+    rv = {
+        'type': 'FeatureCollection',
+        'features': [{
+            'type': 'Feature',
+            'properties': {
+                'name': x['distId'],
+                'biketype': x['biketype'],
+            },
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [x['distX'], x['distY']]
+            }
+        } for x in bikes]
+    }
+    resp = jsonify(rv)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
 def get_bikes():
     d = datetime.now()
     d = d - timedelta(hours=3)
@@ -49,9 +80,14 @@ def get_bikes():
                 locations[obj['distId']] = 1
             else:
                 locations[obj['distId']] += 1
-        resp = jsonify(count=len(locations), repeated=sum(locations.values())-len(locations))
+        resp = dict(count=len(locations), repeated=sum(locations.values())-len(locations))
     else:
-        for obj in bikes.find(condition).limit(30000):
+        limit = request.args.get('limit')
+        try:
+            limit = int(limit)
+        except:
+            limit = 3000
+        for obj in bikes.find(condition).limit(limit):
             if obj['distId'] not in locations:
                 locations[obj['distId']] = info = {}
                 for k in ('biketype', 'distId', 'distY', 'distX', 'datetime'):
@@ -61,9 +97,8 @@ def get_bikes():
                 repeated += 1
 
         print(len(locations), repeated)
-        resp = jsonify(locations.values())
+        resp = locations.values()
 
-    resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 
 

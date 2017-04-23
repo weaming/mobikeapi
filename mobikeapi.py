@@ -23,6 +23,14 @@ class API(object):
         self.bottom = 22.456602
         self.left = 113.808199
         self.right = 114.136072
+
+        p0 = (113.941794, 22.556153)
+        p1 = (114.008313,22.515802)
+        self.top = p0[1]
+        self.bottom = p1[1]
+        self.left = p0[0]
+        self.right = p1[0]
+
         self.offsetX = 0.001
         self.offsetY = 0.001
         print (self.left - self.right)/self.offsetX

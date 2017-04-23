@@ -23,7 +23,7 @@ class API(object):
         self.bottom = 22.456602
         self.left = 113.808199
         self.right = 114.136072
-        self.offsetX = 0.002
+        self.offsetX = 0.001
         self.offsetY = 0.001
         print (self.left - self.right)/self.offsetX
         print (self.top - self.bottom)/self.offsetY
@@ -71,7 +71,8 @@ class API(object):
             #print(resp.text)
             print('-'*50)
         else:
-            print(resp.status_code, url)
+            if resp.status_code != 200:
+                print(resp.status_code, url)
 
             if 'message' in js and js['message'].strip():
                 print('message: %s' % js['message'])
@@ -208,5 +209,6 @@ class API(object):
         for x in frange(self.left, self.right, self.offsetX):
             for y in frange(self.bottom, self.top, self.offsetY):
                 location = (y, x)
+                print(location)
                 yield self.nearby_bikes_info(location=location)
-                #time.sleep(1)
+                time.sleep(0.3)

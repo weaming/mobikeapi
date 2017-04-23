@@ -5,6 +5,7 @@ var map = new AMap.Map('container', {
 });
 
 var last_markders = [];
+
 function set_bike(x) {
     var marker = new AMap.Marker({
         showPositionPoint: true,
@@ -16,6 +17,11 @@ function set_bike(x) {
 }
 
 function fetch_data(center) {
+    // clean
+    last_markders.forEach(x => {
+        x.hide();
+        delete(x)
+    });
     var url = '/api/bikes'
     if (center) {
         var lng = center.lng,
@@ -26,10 +32,6 @@ function fetch_data(center) {
         .then(resp => resp.json())
         .then(function(locations) {
             console.log('bikes:', locations.length)
-
-            // clean
-            last_markders.forEach(x=>{x.hide(); delete(x)});
-            last_markders = [];
 
             locations.forEach(function(x) {
                 var location = new AMap.LngLat(x.distX, x.distY);
@@ -46,4 +48,4 @@ function on_drag(center) {
 }
 
 map.on('dragend', () => on_drag(map.getCenter()));
-on_drag(map.getCenter())
+
